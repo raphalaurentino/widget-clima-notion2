@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Widget horizontal de clima para Notion</title>
+
+  <style>
+    :root {
+      --page-bg: #191919;
+      --card-bg: #725044;
+      --card-border: rgba(255, 255, 255, 0.10);
+      --panel-bg: rgba(35, 24, 21, 0.23);
+      --panel-soft: rgba(255, 255, 255, 0.08);
+      --text: #f4ece8;
+      --muted: #ddcbc4;
+      --muted-2: #c8afa6;
+      --rain: #bfe5ff;
+      --shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: var(--page-bg);
+    }
+
+    body {
+      padding: 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+    }
+
+    .weather-widget {
+      width: min(100%, 1000px);
+      min-height: 126px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 160px 76px 210px minmax(520px, 1fr);
+      align-items: center;
+      gap: 14px;
+      padding: 13px 17px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 4px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .place {
+      min-width: 0;
+      padding-right: 10px;
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .place-name {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .weekday {
+      margin-top: 6px;
+      color: var(--muted);
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .current-weather {
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      min-width: 0;
+    }
+
+    .current-icon {
+      font-size: 34px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.16));
+    }
+
+    .today-rain {
+      margin-top: 7px;
+      color: var(--rain);
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .temperature-area {
+      min-width: 0;
+    }
+
+    .temperature-line {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .temperature {
+      font-family: Arial, sans-serif;
+      font-size: 37px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .condition {
+      color: var(--muted);
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(58px, 1fr));
+      gap: 5px;
+      margin-top: 9px;
+    }
+
+    .metric {
+      padding: 5px 5px 4px;
+      background: var(--panel-bg);
+      border-radius: 6px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+
+    .metric-label {
+      color: var(--muted-2);
+      font-size: 8px;
+      line-height: 1.1;
+    }
+
+    .metric-value {
+      margin-top: 3px;
+      color: var(--text);
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .forecast {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(86px, 1fr));
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .forecast-day {
+      min-width: 0;
+      padding: 8px 5px 7px;
+      background: var(--panel-soft);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+
+    .forecast-weekday {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .forecast-icon {
+      margin: 5px 0 4px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .forecast-temp {
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .forecast-rain {
+      margin-top: 5px;
+      color: var(--rain);
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .loading,
+    .error {
+      width: min(100%, 1000px);
+      min-height: 126px;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      padding: 15px;
+      background: var(--card-bg);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 850px) {
+      body {
+        overflow-x: auto;
+      }
+
+      .weather-widget,
+      .loading,
+      .error {
+        width: 980px;
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main id="app">
+    <div class="loading">Carregando previsão do tempo…</div>
+  </main>
+
+  <script>
+    /*
+      PERSONALIZAÇÃO PELO ENDEREÇO:
+
+      ?cidade=Buenos%20Aires&pais=AR&fundo=191919
+
+      Parâmetros:
+      - cidade: cidade exibida
+      - pais: código ISO de duas letras, como AR ou BR
+      - fundo: cor externa em hexadecimal sem #, como 191919
+               ou "transparent" para transparência real
+    */
+
+    const parametros = new URLSearchParams(window.location.search);
+
+    const config = {
+      cidade: parametros.get("cidade") || "Buenos Aires",
+      pais: parametros.get("pais") || "AR",
+      fundo: parametros.get("fundo") || "191919"
+    };
+
+    const fundoExterno =
+      config.fundo.toLowerCase() === "transparent"
+        ? "transparent"
+        : /^[0-9a-f]{6}$/i.test(config.fundo)
+          ? `#${config.fundo}`
+          : "#191919";
+
+    document.documentElement.style.setProperty("--page-bg", fundoExterno);
+
+    const app = document.getElementById("app");
+
+    const clima = {
+      0:  ["☀️", "Ensolarado"],
+      1:  ["🌤️", "Poucas nuvens"],
+      2:  ["⛅", "Parcialmente nublado"],
+      3:  ["☁️", "Nublado"],
+      45: ["🌫️", "Neblina"],
+      48: ["🌫️", "Neblina"],
+      51: ["🌦️", "Garoa leve"],
+      53: ["🌦️", "Garoa"],
+      55: ["🌧️", "Garoa forte"],
+      56: ["🌧️", "Garoa congelante"],
+      57: ["🌧️", "Garoa congelante"],
+      61: ["🌦️", "Chuva leve"],
+      63: ["🌧️", "Chuva"],
+      65: ["🌧️", "Chuva forte"],
+      66: ["🌧️", "Chuva congelante"],
+      67: ["🌧️", "Chuva congelante"],
+      71: ["🌨️", "Neve leve"],
+      73: ["🌨️", "Neve"],
+      75: ["❄️", "Neve forte"],
+      77: ["❄️", "Grãos de neve"],
+      80: ["🌦️", "Pancadas leves"],
+      81: ["🌧️", "Pancadas"],
+      82: ["⛈️", "Pancadas fortes"],
+      85: ["🌨️", "Neve leve"],
+      86: ["❄️", "Neve forte"],
+      95: ["⛈️", "Trovoadas"],
+      96: ["⛈️", "Trovoadas e granizo"],
+      99: ["⛈️", "Trovoadas e granizo"]
+    };
+
+    const obterClima = (codigo) => clima[codigo] || ["🌡️", "Clima variável"];
+    const arredondar = (valor) => Math.round(Number(valor));
+
+    const obterDiaSemana = (dataISO, formato = "long") =>
+      new Intl.DateTimeFormat("pt-BR", { weekday: formato })
+        .format(new Date(`${dataISO}T12:00:00`))
+        .replace(".", "");
+
+    async function localizarCidade() {
+      const filtroPais = config.pais
+        ? `&countryCode=${encodeURIComponent(config.pais)}`
+        : "";
+
+      const url =
+        `https://geocoding-api.open-meteo.com/v1/search` +
+        `?name=${encodeURIComponent(config.cidade)}` +
+        `&count=1&language=pt&format=json${filtroPais}`;
+
+      const resposta = await fetch(url);
+
+      if (!resposta.ok) {
+        throw new Error("Não foi possível localizar a cidade.");
+      }
+
+      const dados = await resposta.json();
+
+      if (!dados.results?.length) {
+        throw new Error("Cidade não encontrada. Confira o nome e o país.");
+      }
+
+      return dados.results[0];
+    }
+
+    async function consultarPrevisao(local) {
+      const url =
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${local.latitude}` +
+        `&longitude=${local.longitude}` +
+        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+        `&timezone=auto` +
+        `&forecast_days=6`;
+
+      const resposta = await fetch(url);
+
+      if (!resposta.ok) {
+        throw new Error("Não foi possível consultar a previsão.");
+      }
+
+      return resposta.json();
+    }
+
+    function renderizar(local, previsao) {
+      const atual = previsao.current;
+      const diario = previsao.daily;
+      const [iconeAtual, descricaoAtual] = obterClima(atual.weather_code);
+
+      const chuvaHoje = diario.precipitation_probability_max?.[0] ?? 0;
+      const diaAtual = obterDiaSemana(diario.time[0], "long");
+
+      const proximosDias = diario.time.slice(1, 6).map((data, indice) => {
+        const i = indice + 1;
+        const [icone] = obterClima(diario.weather_code[i]);
+        const chuva = diario.precipitation_probability_max?.[i] ?? 0;
+
+        return `
+          <article class="forecast-day">
+            <div class="forecast-weekday">${obterDiaSemana(data, "short")}</div>
+            <div class="forecast-icon">${icone}</div>
+            <div class="forecast-temp">
+              ${arredondar(diario.temperature_2m_max[i])}° /
+              ${arredondar(diario.temperature_2m_min[i])}°
+            </div>
+            <div class="forecast-rain">💧 ${chuva}%</div>
+          </article>
+        `;
+      }).join("");
+
+      app.innerHTML = `
+        <section class="weather-widget">
+          <div class="place">
+            <div class="place-name">${local.name}</div>
+            <div class="weekday">${diaAtual}</div>
+          </div>
+
+          <div class="current-weather">
+            <div class="current-icon">${iconeAtual}</div>
+            <div class="today-rain">💧 ${chuvaHoje}%</div>
+          </div>
+
+          <div class="temperature-area">
+            <div class="temperature-line">
+              <div class="temperature">${arredondar(atual.temperature_2m)}°C</div>
+              <div class="condition">${descricaoAtual}</div>
+            </div>
+
+            <div class="metrics">
+              <div class="metric">
+                <div class="metric-label">Sensação</div>
+                <div class="metric-value">${arredondar(atual.apparent_temperature)}°C</div>
+              </div>
+
+              <div class="metric">
+                <div class="metric-label">Umidade</div>
+                <div class="metric-value">${arredondar(atual.relative_humidity_2m)}%</div>
+              </div>
+
+              <div class="metric">
+                <div class="metric-label">Vento</div>
+                <div class="metric-value">${arredondar(atual.wind_speed_10m)} km/h</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="forecast">
+            ${proximosDias}
+          </div>
+        </section>
+      `;
+    }
+
+    async function iniciar() {
+      try {
+        const local = await localizarCidade();
+        const previsao = await consultarPrevisao(local);
+        renderizar(local, previsao);
+      } catch (erro) {
+        app.innerHTML = `<div class="error">⚠️ ${erro.message}</div>`;
+      }
+    }
+
+    iniciar();
+  </script>
+</body>
+</html>
