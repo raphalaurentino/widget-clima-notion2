@@ -258,6 +258,36 @@
 .forecast-rain {
   font-size: 11px;
 }
+/* CENTRALIZA O BLOCO DE TEMPERATURA ATUAL NO ESPAÇO LIVRE */
+
+.weather-widget {
+  grid-template-columns: 175px 82px minmax(250px, 1fr) auto;
+}
+
+.temperature-area {
+  width: 250px;
+  justify-self: center;
+  text-align: center;
+}
+
+.temperature-line {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+}
+
+.metrics {
+  width: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  justify-content: center;
+}
+
+.forecast {
+  width: max-content;
+  justify-self: end;
+}
   </style>
 </head>
 
