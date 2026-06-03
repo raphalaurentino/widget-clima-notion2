@@ -288,6 +288,42 @@
   width: max-content;
   justify-self: end;
 }
+/* CENTRALIZA CIDADE, DIA, ÍCONE E CHANCE DE CHUVA
+   MANTENDO A LINHA VERTICAL SEPARADORA */
+
+.place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-self: stretch;
+  padding-right: 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  text-align: center;
+}
+
+.place-name,
+.weekday {
+  width: 100%;
+  text-align: center;
+}
+
+.current-weather {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  padding-left: 8px;
+  text-align: center;
+}
+
+.current-icon,
+.today-rain {
+  width: 100%;
+  text-align: center;
+}
   </style>
 </head>
 
